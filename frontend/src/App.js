@@ -198,7 +198,7 @@ function UnlimitedMode() {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/get_random_song', {
+      const response = await fetch('https://songsensei-backend.onrender.com/api/get_random_song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ function UnlimitedMode() {
       setGuesses([]);
       setGameStatus('playing');
 
-      const suggestionResponse = await fetch('http://localhost:5000/api/get_song_suggestions', {
+      const suggestionResponse = await fetch('https://songsensei-backend.onrender.com/api/get_song_suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ year, difficulty }),
@@ -356,7 +356,7 @@ function UnlimitedMode() {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/get_random_song', {
+      const response = await fetch('https://songsensei-backend.onrender.com/api/get_random_song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
