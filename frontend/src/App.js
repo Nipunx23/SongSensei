@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 import './UnlimitedMode.css';
 
@@ -58,32 +59,206 @@ function Landing() {
   );
 }
 
-// Enhanced Unlimited Mode Component with Difficulty Selection
+function useUserSession() {
+  const [userId, setUserId] = useState(null);
+  
+  useEffect(() => {
+    // Check for existing userId in localStorage
+    let id = localStorage.getItem('songsensei_user_id');
+    
+    // If no userId exists, create a new one
+    if (!id) {
+      id = uuidv4();
+      localStorage.setItem('songsensei_user_id', id);
+    }
+    
+    setUserId(id);
+  }, []);
+  
+  return userId;
+}
+
+const FALLBACK_SONGS = [
+  {
+    "title": "Pehla Nasha",
+    "movie": "Jo Jeeta Wohi Sikandar",
+    "year": 1992,
+    "youtubeId": "ZYotlBxpM3Q",
+    "difficulty": "easy"
+  },
+  {
+    "title": "Tujhe Dekha To",
+    "movie": "Dilwale Dulhania Le Jayenge",
+    "year": 1995,
+    "youtubeId": "vCTW2GfcepQ",
+    "difficulty": "easy"
+  },
+  {
+    "title": "Chaiyya Chaiyya",
+    "movie": "Dil Se",
+    "year": 1998,
+    "youtubeId": "K-pX4qwtAxA",
+    "difficulty": "easy"
+  },
+  {
+    "title": "Kajra Re",
+    "movie": "Bunty Aur Babli",
+    "year": 2005,
+    "youtubeId": "4dsFQFCvVGU",
+    "difficulty": "easy"
+  },
+  {
+    "title": "Tumse Milke Dil Ka",
+    "movie": "Main Hoon Na",
+    "year": 2004,
+    "youtubeId": "mXkbWKr5ovU",
+    "difficulty": "easy"
+  },
+  {
+    "title": "Raabta",
+    "movie": "Agent Vinod",
+    "year": 2012,
+    "youtubeId": "zlt38OOqwDc",
+    "difficulty": "medium"
+  },
+  {
+    "title": "Kabira",
+    "movie": "Yeh Jawaani Hai Deewani",
+    "year": 2013,
+    "youtubeId": "jHNNMj5bNQw",
+    "difficulty": "medium"
+  },
+  {
+    "title": "Tum Hi Ho",
+    "movie": "Aashiqui 2",
+    "year": 2013,
+    "youtubeId": "Umqb9KENgmk",
+    "difficulty": "medium"
+  },
+  {
+    "title": "Ghungroo",
+    "movie": "War",
+    "year": 2019,
+    "youtubeId": "qFkNATtc3mc",
+    "difficulty": "medium"
+  },
+  {
+    "title": "Chaleya",
+    "movie": "Jawan",
+    "year": 2023,
+    "youtubeId": "VAdGW7QDJiU",
+    "difficulty": "medium"
+  },
+  {
+    "title": "Besharam Rang",
+    "movie": "Pathaan",
+    "year": 2022,
+    "youtubeId": "huxhqphtDrM",
+    "difficulty": "hard"
+  },
+  {
+    "title": "Jhoome Jo Pathaan",
+    "movie": "Pathaan",
+    "year": 2023,
+    "youtubeId": "YxWlaYCA8MU",
+    "difficulty": "hard"
+  },
+  {
+    "title": "Tere Vaaste",
+    "movie": "Zara Hatke Zara Bachke",
+    "year": 2023,
+    "youtubeId": "g5WZLO8BAC8",
+    "difficulty": "hard"
+  },
+  {
+    "title": "Phir Aur Kya Chahiye",
+    "movie": "Zara Hatke Zara Bachke",
+    "year": 2023,
+    "youtubeId": "8sLS2knUa6Y",
+    "difficulty": "hard"
+  },
+  {
+    "title": "Arjan Vailly",
+    "movie": "Animal",
+    "year": 2023,
+    "youtubeId": "zqGW6x_5N0k",
+    "difficulty": "hard"
+  },
+  {
+    "title": "Mein Parwaana",
+    "movie": "Pippa",
+    "year": 2023,
+    "youtubeId": "BDKjWnPZYPQ",
+    "difficulty": "extreme"
+  },
+  {
+    "title": "Zinda Banda",
+    "movie": "Jawan",
+    "year": 2023,
+    "youtubeId": "stjZKBhQ3lg",
+    "difficulty": "extreme"
+  },
+  {
+    "title": "Chaleya (Arabic Version)",
+    "movie": "Jawan",
+    "year": 2023,
+    "youtubeId": "WDqeSZNXQOI",
+    "difficulty": "extreme"
+  },
+  {
+    "title": "Aararaari Raaro",
+    "movie": "Jawan",
+    "year": 2023,
+    "youtubeId": "cTtUOtiVUXQ",
+    "difficulty": "extreme"
+  }
+];
+
+
+// This function selects a random song from our fallback list
+const getRandomFallbackSong = () => {
+  const randomIndex = Math.floor(Math.random() * FALLBACK_SONGS.length);
+  return FALLBACK_SONGS[randomIndex];
+};
+
 function UnlimitedMode() {
   const navigate = useNavigate();
-  const [year, setYear] = useState('');
-  const [difficulty, setDifficulty] = useState('medium'); // Default difficulty
+  const userId = useUserSession(); // Add user session
+  const [difficulty, setDifficulty] = useState('medium');
   const [songData, setSongData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [streak, setStreak] = useState(0);
   const [roundsPlayed, setRoundsPlayed] = useState(0);
+  const [score, setScore] = useState(0); // Add score counter
   const [guessInput, setGuessInput] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [gameStatus, setGameStatus] = useState('playing'); // 'playing', 'won', 'lost'
+  const [gameStatus, setGameStatus] = useState('playing');
   const [slideDirection, setSlideDirection] = useState('');
   const [allTitles, setAllTitles] = useState([]);
-  const [randStart, setRandStart] = useState(0)
+  const [randStart, setRandStart] = useState(Math.floor(Math.random() * 31) + 10);
   const [playerReady, setPlayerReady] = useState(false);
-
+  const [genre, setGenre] = useState('all'); // 'all', 'bollywood', 'hiphop'
+  // Add state for progressive timer
+  const [playTime, setPlayTime] = useState(100); // Start with 0.1 seconds (in milliseconds)
   
   const MAX_GUESSES = 5;
-  const PLAY_TIME = 4800;
+  // Remove fixed PLAY_TIME constant and use state instead
   const audioRef = useRef(null);
   const timerRef = useRef(null);
   const inputRef = useRef(null);
+  const backgroundPlayerRef = useRef(null);
+
+  // Function to generate random year from 1931 to 2021 with step size 10
+  const getRandomYear = () => {
+    const years = [];
+    for (let year = 1981; year <= new Date().getFullYear(); year += 10) {
+      years.push(year);
+    }
+    return years[Math.floor(Math.random() * years.length)];
+  };
 
   // Fetch song suggestions based on input
   useEffect(() => {
@@ -93,7 +268,7 @@ function UnlimitedMode() {
       } else {
         setSuggestions([]);
       }
-    },50);
+    }, 50);
     return () => clearTimeout(delayDoubounce);
   }, [guessInput]);
 
@@ -110,49 +285,123 @@ function UnlimitedMode() {
   const youtubeContainerRef = useRef(null);
 
   const loadYouTubeVideo = (videoId) => {
-    // Clean up existing player if it exists
-    if (playerRef.current?.destroy) {
-      playerRef.current.destroy();
+    console.log("Loading YouTube video:", videoId);
+    
+    if (!youtubeContainerRef.current) {
+      console.warn("YouTube container not mounted yet. Skipping video load.");
+      return;
+    }
+
+    // Clean up any existing player first
+    if (playerRef.current) {
+      try {
+        if (typeof playerRef.current.destroy === 'function') {
+          playerRef.current.destroy();
+        }
+      } catch (err) {
+        console.error("Error destroying previous player:", err);
+      }
       playerRef.current = null;
     }
-    
-    // Create a fresh container for the YouTube player
-    if (youtubeContainerRef.current) {
-      youtubeContainerRef.current.innerHTML = '<div id="youtube-player"></div>';
+
+    // Clear any existing timers
+    if (youtubeTimerRef.current) {
+      clearTimeout(youtubeTimerRef.current);
+      youtubeTimerRef.current = null;
     }
-    
-    if (window.YT && window.YT.Player) {
-      playerRef.current = new window.YT.Player('youtube-player', {
-        height: '0', // hide video
-        width: '0',
-        videoId: videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-        },
-        events: {
-          onReady: () => {
-            console.log("YouTube player ready");
-            setPlayerReady(true);
+
+    // Create unique player ID with timestamp
+    const uniquePlayerId = `youtube-player-${userId}-${Date.now()}`;
+    youtubeContainerRef.current.innerHTML = `<div id="${uniquePlayerId}"></div>`;
+
+    // Reset player ready state
+    setPlayerReady(false);
+
+    // Small delay to ensure DOM is updated
+    setTimeout(() => {
+      try {
+        playerRef.current = new window.YT.Player(uniquePlayerId, {
+          height: '0',
+          width: '0',
+          videoId: videoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            modestbranding: 1,
+            rel: 0,
           },
-          onError: (e) => {
-            console.error("YouTube error:", e);
-            setError("Could not load YouTube video.");
+          events: {
+            onReady: (event) => {
+              console.log("YouTube player ready for:", videoId);
+              setPlayerReady(true);
+            },
+            onError: (e) => {
+              console.error("YouTube error:", e);
+              setError("Could not load YouTube video.");
+              setPlayerReady(false);
+            },
+            onStateChange: (event) => {
+              console.log("Player state changed:", event.data);
+            }
           }
-        }
-      });
-    } else {
-      console.error("YouTube API not loaded yet");
+        });
+      } catch (err) {
+        console.error("Error creating YouTube player:", err);
+        setPlayerReady(false);
+      }
+    }, 100);
+  };
+
+  // Load YouTube video when songData changes and game is playing
+  useEffect(() => {
+    if (songData?.youtubeId && userId && gameStatus === 'playing') {
+      console.log("Effect triggered - loading video:", songData.youtubeId);
+      const timeoutId = setTimeout(() => {
+        loadYouTubeVideo(songData.youtubeId);
+      }, 200);
+      
+      return () => clearTimeout(timeoutId);
     }
+  }, [songData?.youtubeId, userId, gameStatus]);
+
+  const loadBackgroundVideo = (videoId, startTime = 0) => {
+    const container = document.querySelector(".youtube-blur-player");
+
+    if (!container) {
+      console.warn("Background container not mounted yet.");
+      return;
+    }
+
+    if (backgroundPlayerRef.current?.destroy) {
+      backgroundPlayerRef.current.destroy();
+      backgroundPlayerRef.current = null;
+    }
+
+    const id = `youtube-blur-player-${userId}-${Date.now()}`;
+    container.innerHTML = `<div id="${id}"></div>`;
+
+    backgroundPlayerRef.current = new window.YT.Player(id, {
+      height: '360',
+      width: '640',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        modestbranding: 1,
+        rel: 0,
+        start: startTime,
+        mute: 0,
+        loop: 1,
+        playlist: videoId
+      }
+    });
   };
 
   useEffect(() => {
-    if (songData?.youtubeId) {
-      loadYouTubeVideo(songData.youtubeId);
+    if ((gameStatus === 'won' || gameStatus === 'lost' || gameStatus === 'skipped') && songData?.youtubeId) {
+      loadBackgroundVideo(songData.youtubeId, randStart);
     }
-  }, [songData]);
+  }, [gameStatus]);
 
   const fetchSongSuggestions = async (input) => {
     // In a real implementation, this would be an API call
@@ -186,28 +435,29 @@ function UnlimitedMode() {
     }
   };
 
-  const handleYearSubmit = async (e) => {
+  const handleDifficultySubmit = async (e) => {
     e.preventDefault();
     
-    if (!year || isNaN(parseInt(year)) || parseInt(year) < 1980 || parseInt(year) > 2025) {
-      setError('Please enter a valid year between 1980 and 2025');
-      return;
-    }
+    const randomYear = getRandomYear();
     
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch('https://songsensei-backend.onrender.com/api/get_random_song', {
+      const response = await fetch('http://localhost:5000/api/get_random_song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ year: year, difficulty: difficulty}),
+        body: JSON.stringify({ 
+          year: randomYear, 
+          difficulty: difficulty,
+          genre: 'all',
+          userId: userId
+        }),
       });
 
       if (!response.ok) {
-        // Try to get a more specific error message from the API
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch song');
       }
@@ -216,44 +466,79 @@ function UnlimitedMode() {
       setSongData(data);
       setGuesses([]);
       setGameStatus('playing');
+      setPlayTime(100);
+      setRandStart(Math.floor(Math.random() * 31) + 10);
 
-      const suggestionResponse = await fetch('https://songsensei-backend.onrender.com/api/get_song_suggestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year, difficulty }),
-      });
+      try {
+        const suggestionResponse = await fetch('http://localhost:5000/api/get_song_suggestions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            year: randomYear, 
+            difficulty,
+            genre: genre,
+            userId: userId
+          }),
+        });
 
-      const suggestionData = await suggestionResponse.json();
-      setAllTitles(suggestionData.all || []);
+        const suggestionData = await suggestionResponse.json();
+        setAllTitles(suggestionData.all || []);
+      } catch (suggestionErr) {
+        // If we can't get suggestions, use the fallback song titles
+        setAllTitles(FALLBACK_SONGS.map(song => song.title));
+      }
 
     } catch (err) {
-      // Display more specific error message if available
-      setError(`Error: ${err.message || 'Failed to fetch song. Please try again.'}`);
-      console.error(err);
+      // Display error message but continue with fallback
+      console.error("API Error:", err.message);
+      setError(`API Error: ${err.message}. Using fallback song.`);
+      
+      // Use a fallback song instead
+      const fallbackSong = getRandomFallbackSong();
+      setSongData(fallbackSong);
+      setGuesses([]);
+      setGameStatus('playing');
+      setPlayTime(100);
+      setRandStart(Math.floor(Math.random() * 31) + 10);
+      
+      // Use fallback song titles for suggestions
+      setAllTitles(FALLBACK_SONGS.map(song => song.title));
+      
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
     } finally {
       setLoading(false);
     }
   };
 
   const playFor5Seconds = () => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !playerReady) {
+      console.log("Player not ready:", { player: !!playerRef.current, ready: playerReady });
+      return;
+    }
 
     try {
+      console.log("Starting playback from:", randStart, "for duration:", playTime);
       playerRef.current.seekTo(randStart);
       playerRef.current.playVideo();
       
       const checkPlaying = setInterval(() => {
-        setIsPlaying(true);
-        if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === window.YT.PlayerState.PLAYING) {
-          clearInterval(checkPlaying);
+        if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
+          const state = playerRef.current.getPlayerState();
+          console.log("Player state:", state);
+          
+          if (state === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+            clearInterval(checkPlaying);
 
-          // Now start the 5-second timer only when audio actually starts
-          youtubeTimerRef.current = setTimeout(() => {
-            if (playerRef.current && playerRef.current.pauseVideo) {
-              playerRef.current.pauseVideo();
-            }
-            setIsPlaying(false);
-          }, PLAY_TIME);
+            // Now start the timer with the current playTime value
+            youtubeTimerRef.current = setTimeout(() => {
+              if (playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+                playerRef.current.pauseVideo();
+              }
+              setIsPlaying(false);
+            }, playTime);
+          }
         }
       }, 100);
 
@@ -261,28 +546,58 @@ function UnlimitedMode() {
       setTimeout(() => {
         clearInterval(checkPlaying);
         if (isPlaying) setIsPlaying(false);
-      }, PLAY_TIME);
+      }, playTime > 5000 ? playTime + 1000 : 5000);
     } catch (err) {
       console.error("Error playing YouTube video:", err);
       setIsPlaying(false);
     }
   };
 
+  // Add the skip song function
+  const skipSong = () => {
+    // Mark as lost round
+    setGameStatus('skipped');
+    setStreak(0); // Reset streak on skip
+    setRoundsPlayed(roundsPlayed + 1);
+  };
+
   // Clean up everything related to YouTube player and timers
   const cleanupYouTubePlayer = () => {
+    console.log("Cleaning up YouTube players...");
+    
+    // Clean up background player
+    if (backgroundPlayerRef.current) {
+      try {
+        if (typeof backgroundPlayerRef.current.destroy === 'function') {
+          backgroundPlayerRef.current.destroy();
+        }
+      } catch (err) {
+        console.error("Error destroying background player:", err);
+      }
+      backgroundPlayerRef.current = null;
+    }
+    
+    // Clean up YouTube timer
     if (youtubeTimerRef.current) {
       clearTimeout(youtubeTimerRef.current);
       youtubeTimerRef.current = null;
     }
     
-    if (playerRef.current?.destroy) {
+    // Clean up main player
+    if (playerRef.current) {
       try {
-        playerRef.current.destroy();
+        if (typeof playerRef.current.destroy === 'function') {
+          playerRef.current.destroy();
+        }
       } catch (err) {
-        console.error("Error destroying YouTube player:", err);
+        console.error("Error destroying main player:", err);
       }
       playerRef.current = null;
     }
+
+    // Reset states
+    setIsPlaying(false);
+    setPlayerReady(false);
   };
 
   useEffect(() => {
@@ -293,6 +608,28 @@ function UnlimitedMode() {
       }
     };
   }, []);
+
+  // Function to increase play time with each wrong guess
+  const increasePlayTime = () => {
+    // The sequence is 0.1 -> 0.5 -> 1 -> 5 -> 10 seconds
+    switch (playTime) {
+      case 100: // 0.1 seconds
+        setPlayTime(500); // 0.5 seconds
+        break;
+      case 500: // 0.5 seconds
+        setPlayTime(1000); // 1 second
+        break;
+      case 1000: // 1 second
+        setPlayTime(5000); // 5 seconds
+        break;
+      case 5000: // 5 seconds
+        setPlayTime(10000); // 10 seconds
+        break;
+      default:
+        // Don't increase further
+        setPlayTime(10000);
+    }
+  };
 
   const handleGuessSubmit = (e) => {
     e.preventDefault();
@@ -308,11 +645,20 @@ function UnlimitedMode() {
     if (songData && guessInput.trim().toLowerCase() === songData.title.toLowerCase()) {
       setGameStatus('won');
       setStreak(streak + 1);
+      // Add points to score based on number of remaining guesses
+      const remainingGuesses = MAX_GUESSES - newGuesses.length + 1;
+      const pointsEarned = remainingGuesses * 100;
+      setScore(score + pointsEarned);
       setRoundsPlayed(roundsPlayed + 1);
-    } else if (newGuesses.length >= MAX_GUESSES) {
-      setGameStatus('lost');
-      setStreak(0);
-      setRoundsPlayed(roundsPlayed + 1);
+    } else {
+      // Incorrect guess - increase play time
+      increasePlayTime();
+      
+      if (newGuesses.length >= MAX_GUESSES) {
+        setGameStatus('lost');
+        setStreak(0);
+        setRoundsPlayed(roundsPlayed + 1);
+      }
     }
   };
 
@@ -325,59 +671,81 @@ function UnlimitedMode() {
     }
   };
 
-  const nextSong = () => {
-    setSlideDirection('slide-left');
-    setIsPlaying(false);
-    setPlayerReady(false);
+  const handleGenreChange = (newGenre) => {
+    if (genre !== newGenre) {
+      setGenre(newGenre);
+      if (songData) {
+        nextSong(); // reloads song without resetting score
+      }
+    }
+  };
 
-    // Clean up the YouTube player
+  const nextSong = () => {
+    console.log("Next song clicked - cleaning up...");
+    
+    setSlideDirection('slide-left');
+    
+    // Immediately clean up players and reset states
     cleanupYouTubePlayer();
     
     // Wait for animation before resetting state
     setTimeout(() => {
+      console.log("Animation complete - resetting for new song...");
+      
       // Reset game state
       setGuesses([]);
       setGameStatus('playing');
       setSlideDirection('');
+      setPlayTime(100); // Reset play time for new song
       
-      // Reuse the existing year and difficulty to fetch a new song
+      // Fetch a new song with random year
       handleFetchNewSong();
     }, 500);
   };
   
-  // Function to fetch a new song using existing year and difficulty
+  // Function to fetch a new song using random year and existing difficulty
   const handleFetchNewSong = async () => {
-    if (!year) {
-      setError('Please select a year first');
-      return;
-    }
+    const randomYear = getRandomYear();
     
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch('https://songsensei-backend.onrender.com/api/get_random_song', {
+      const response = await fetch('http://localhost:5000/api/get_random_song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ year: year, difficulty: difficulty}),
+        body: JSON.stringify({ 
+          year: randomYear, 
+          difficulty: difficulty,
+          genre: genre, 
+          userId: userId
+        }),
       });
 
       if (!response.ok) {
-        // Try to get a more specific error message from the API
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch song');
       }
       
       const data = await response.json();
+      console.log("New song loaded:", data.title);
       setSongData(data);
       setRandStart(Math.floor(Math.random() * 31) + 10);
     } catch (err) {
-      // Only set songData to null if we fail to fetch a new song
-      setSongData(null);
-      setError(`Error: ${err.message || 'Failed to fetch song. Please try again.'}`);
-      console.error(err);
+      // Display error message but don't stop the game
+      console.error("API Error:", err.message);
+      setError(`API Error: ${err.message}. Using fallback song.`);
+      
+      // Use a fallback song instead
+      const fallbackSong = getRandomFallbackSong();
+      console.log("Using fallback song:", fallbackSong.title);
+      setSongData(fallbackSong);
+      setRandStart(Math.floor(Math.random() * 31) + 10);
+      
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
     } finally {
       setLoading(false);
     }
@@ -387,6 +755,19 @@ function UnlimitedMode() {
     // Make sure to clean up before navigation
     cleanupYouTubePlayer();
     navigate('/');
+  };
+
+  const goBackToDifficultySelection = () => {
+    // Clean up YouTube player and reset game state
+    cleanupYouTubePlayer();
+    setSongData(null);
+    setGuesses([]);
+    setGameStatus('playing');
+    setSlideDirection('');
+    setPlayTime(100);
+    setIsPlaying(false);
+    setPlayerReady(false);
+    setError(null);
   };
 
   // Get the color for a guess based on correctness
@@ -409,6 +790,11 @@ function UnlimitedMode() {
     return hasCommonWords ? 'bg-yellow-600' : 'bg-red-600';
   };
 
+  // Format play time for display
+  const formatPlayTime = (ms) => {
+    return (ms / 1000).toFixed(1) + 's';
+  };
+
   return (
     <div className={`game-container ${slideDirection}`}>
       <div className="game-header">
@@ -426,20 +812,44 @@ function UnlimitedMode() {
             <div className="guesses-left">
               <span>Guesses:</span> {MAX_GUESSES - guesses.length}/{MAX_GUESSES}
             </div>
+            <div className="score">
+              <span>Score:</span> {score}
+            </div>
           </div>
         )}
       </div>
 
       {songData ? (
         <div className={`game-area ${slideDirection}`}>
-          <h2>Guess the Song!</h2>
-          
-          <div className="difficulty-display">
-            <p>Difficulty: <span className={`difficulty-badge ${songData.difficulty}`}>{songData.difficulty}</span></p>
+
+          <div className="genre-selection">
+            <h2>Select genre:</h2>
+            <div className="genre-slider">
+              {['all', 'bollywood', 'hiphop'].map((g) => (
+                <div
+                  key={g}
+                  className={`genre-option ${genre === g ? 'selected' : ''}`}
+                  onClick={() => handleGenreChange(g)}
+                >
+                  {g.charAt(0).toUpperCase() + g.slice(1)}
+                </div>
+              ))}
+            </div>
           </div>
           
+          
+          <h2>Guess the Song!</h2>
+            <h4>
+              {genre === 'hiphop'
+                ? ``
+                : songData.year < 1970 
+                  ? `1950-${new Date().getFullYear()}` 
+                  : `${songData.year-songData.year%10-5}-${Math.min(songData.year-songData.year%10+15,new Date().getFullYear())}`
+              }
+            </h4>
+          
           <div ref={youtubeContainerRef} className="youtube-container">
-            <div id="youtube-player" style={{ display: 'none' }}></div>
+            {/* YouTube player will be created here */}
           </div>
           
           <div className="song-player">
@@ -455,13 +865,27 @@ function UnlimitedMode() {
               <button 
                 className="play-button" 
                 onClick={playFor5Seconds}
-                disabled={!playerReady || isPlaying || gameStatus !== 'playing'}
+                disabled={!playerReady || isPlaying || gameStatus !== 'playing' || loading}
               >
-                {isPlaying ? 'Playing...' : 'Play 5-Second Clip'}
+                {loading ? 'Loading...' : isPlaying ? `Playing... (${formatPlayTime(playTime)})` : `Play Clip (${formatPlayTime(playTime)})`}
               </button>
+              
+              {/* Add the Skip Song button */}
+              {gameStatus === 'playing' && (
+                <button 
+                  className="skip-button" 
+                  onClick={skipSong}
+                  disabled={isPlaying}
+                >
+                  Skip Song
+                </button>
+              )}
+              
               {isPlaying && (
                 <div className="progress-bar">
-                  <div className="progress"></div>
+                  <div className="progress" style={{
+                    animationDuration: `${playTime/1000 + 0.2}s` // Adjust animation duration to match play time
+                  }}></div>
                 </div>
               )}
             </div>
@@ -507,14 +931,21 @@ function UnlimitedMode() {
             <div className="result-area">
               <div className={`result-message ${gameStatus === 'won' ? 'won' : 'lost'}`}>
                 {gameStatus === 'won' ? (
-                  <h5>You got it right!</h5>
+                  <h3>You got it right!</h3>
+                ) : gameStatus === 'skipped' ? (
+                  <h3>Song Skipped!</h3>
                 ) : (
-                  <h5>Better luck next time!</h5>
+                  <h3>Better luck next time!</h3>
                 )}
                 <div className="song-details">
                   <p className="song-title">{songData.title}</p>
                   <p className="song-movie">From: {songData.movie}</p>
                   <p className="song-difficulty">Difficulty: <span className={`difficulty-badge ${songData.difficulty}`}>{songData.difficulty}</span></p>
+                  {gameStatus === 'won' && (
+                    <p className="points-earned">
+                      Points earned: +{(MAX_GUESSES - guesses.length + 1) * 100}
+                    </p>
+                  )}
                 </div>
               </div>
               
@@ -548,23 +979,18 @@ function UnlimitedMode() {
               </div>
             </div>
           )}
+
+          {(gameStatus === 'won' || gameStatus === 'lost' || gameStatus === 'skipped') && (
+            <div className="video-background">
+              <div id="video-blur-layer"></div>
+              <div className="youtube-blur-player"></div>
+            </div>
+          )}
+
         </div>
       ) : (
         <div className="year-selection">
-          <form onSubmit={handleYearSubmit}>
-            <label htmlFor="yearInput">
-              Enter a year (songs will be from before this year):
-            </label>
-            <input
-              id="yearInput"
-              type="number"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              min="1980"
-              max="2025"
-              required
-            />
-            
+          <form onSubmit={handleDifficultySubmit}>
             <div className="difficulty-selection">
               <label>Select difficulty level:</label>
               <div className="difficulty-options">
