@@ -23,6 +23,7 @@ def get_random_song():
         param = request.get_json()
         year = int(param['year'])
         difficulty = param['difficulty'].lower()
+        genre = param['genre'].lower()
         
         year_max = year
         # Remove strict assertion - handle all valid years
@@ -53,78 +54,116 @@ def get_random_song():
         }
         
         page_id = random.choice(level_map[difficulty][1])
-        url = f"https://myswar.co/advanced-search?pagid={page_id}&playlist=0&album_type=Film&from_year={year_min}&to_year={year_max}&album_language=Hindi&sort={level_map[difficulty][0]}&ut=3&result_type=songs"
+        min_length,max_length=0,1
 
-        # Add retry mechanism
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                response = requests.get(url, headers=headers, timeout=10)
-                response.raise_for_status()  # Raise exception for 4XX/5XX responses
-                break
-            except requests.exceptions.RequestException as e:
-                if attempt == max_retries - 1:
-                    return jsonify({"error": f"Failed to fetch songs after {max_retries} attempts: {str(e)}"}), 500
-                time.sleep(1)  # Wait before retrying
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
+        while(min_length != max_length):
+            url = ""
+            if param['genre'].lower() == 'all':
+                genre = random.choice(['bollywood','bollywood','hiphop'])
+            if genre == 'bollywood':
+                url = f"https://myswar.co/popular_song/decade/{year-year%10+1}/{page_id}?sort={level_map[difficulty][0]}"
+            elif genre == 'hiphop':
+                url = f"https://myswar.co/popular_song/genre/Hip-hop/{page_id}?sort={level_map[difficulty][0]}"
+                
 
-        # Extract song information with error handling
-        song_labels = soup.find_all('a', class_='songs_like_this2')
-        if not song_labels:
-            return jsonify({"error": "No songs found for this year and difficulty"}), 404
+            # url = f"https://myswar.co/advanced-search?pagid={page_id}&playlist=0&album_type=Film&from_year={year_min}&to_year={year_max}&album_language=Hindi&sort={level_map[difficulty][0]}&ut=3&result_type=songs"
+
+            # Add retry mechanism
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = requests.get(url, headers=headers, timeout=10)
+                    response.raise_for_status()  # Raise exception for 4XX/5XX responses
+                    break
+                except requests.exceptions.RequestException as e:
+                    if attempt == max_retries - 1:
+                        print()
+                        print("Issue")
+                        print()
+                        return jsonify({"error": f"Failed to fetch songs after {max_retries} attempts: {str(e)}"}), 500
+                    time.sleep(1)  # Wait before retrying
             
-        song_list = []
-        for l in song_labels:
-            try:
-                parts = l.text.split("  ")
-                if len(parts) >= 3:
-                    song_list.append(parts[2][4:-2])
-                else:
-                    # Alternative parsing if the expected format isn't found
-                    song_title = l.text.strip()
-                    if song_title:
-                        song_list.append(song_title)
-            except Exception as e:
-                print(f"Error parsing song title: {e}")
-        
-        if not song_list:
-            return jsonify({"error": "Failed to parse song titles"}), 500
-            
-        movie_labels = soup.findAll('span', class_='attribute_lable', string='Album:')
-        movie_list = []
-        for s in movie_labels:
-            try:
-                sibling = s.find_next_sibling()
-                if sibling:
-                    parts = sibling.text.split("  ")
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Extract song information with error handling
+            song_labels = soup.find_all('a', class_='songs_like_this2')
+            if not song_labels:
+                return jsonify({"error": "No songs found for this year and difficulty"}), 404
+                
+            song_list = []
+            for l in song_labels:
+                try:
+                    parts = l.text.split("  ")
                     if len(parts) >= 3:
-                        movie_list.append(parts[2][4:-3])
+                        song_list.append(parts[2][4:-2])
                     else:
-                        movie_list.append(sibling.text.strip())
-            except Exception as e:
-                print(f"Error parsing movie title: {e}")
-                movie_list.append("Unknown Movie")
-        
-        # If we couldn't find movie titles, use placeholders
-        while len(movie_list) < len(song_list):
-            movie_list.append("Unknown Movie")
-
-        target_img_src = "//myswar.co/static/img/Youtube.png?v=794a0e9853abea7cd1e985551a646318f8ae8388"
-        youtube_links = []
-        for a_tag in soup.find_all('a'):
-            img_tag = a_tag.find('img', src=target_img_src)
-            if img_tag and 'href' in a_tag.attrs:
-                youtube_id = extract_youtube_id(a_tag['href'])
-                if youtube_id:
-                    youtube_links.append(youtube_id)
-        
-        # If no YouTube links were found, return an error
-        if not youtube_links:
-            return jsonify({"error": "No YouTube links found for songs"}), 404
+                        # Alternative parsing if the expected format isn't found
+                        song_title = l.text.strip()
+                        if song_title:
+                            song_list.append(song_title)
+                except Exception as e:
+                    print(f"Error parsing song title: {e}")
             
-        # Make sure we have the same number of elements in each list
-        min_length = min(len(song_list), len(movie_list), len(youtube_links))
+            if not song_list:
+                return jsonify({"error": "Failed to parse song titles"}), 500
+                
+            movie_labels = soup.findAll('span', class_='attribute_lable', string='Album:')
+            movie_list = []
+            for s in movie_labels:
+                try:
+                    sibling = s.find_next_sibling()
+                    if sibling:
+                        parts = sibling.text.split("  ")
+                        if len(parts) >= 3:
+                            movie_list.append(parts[2][4:-3])
+                        else:
+                            movie_list.append(sibling.text.strip())
+                except Exception as e:
+                    print(f"Error parsing movie title: {e}")
+                    movie_list.append("Unknown Movie")
+            
+            # If we couldn't find movie titles, use placeholders
+            while len(movie_list) < len(song_list):
+                movie_list.append("Unknown Movie")
+
+            # target_img_src = "//myswar.co/static/img/Youtube.png?v=794a0e9853abea7cd1e985551a646318f8ae8388"
+            youtube_links = []
+            for a_tag in soup.find_all('a'):
+                img_tag = a_tag.find('img')
+                if img_tag and "Youtube.png" in img_tag.get('src','') and 'href' in a_tag.attrs:
+                    youtube_id = extract_youtube_id(a_tag['href'])
+                    if youtube_id:
+                        youtube_links.append(youtube_id)
+            
+            # If no YouTube links were found, return an error
+                
+            # Make sure we have the same number of elements in each list
+            print()
+            print()
+            print(song_list)
+            print(movie_list)
+            print(youtube_links)
+            print()
+            print()
+            min_length = min(len(song_list), len(movie_list), len(youtube_links))
+            max_length = max(len(song_list), len(movie_list), len(youtube_links))
+            if(page_id > max(level_map[difficulty][1])+2):
+                min_length = max_length = 0
+            page_id += 1
+        if not youtube_links:
+            print()
+            print()
+            print(youtube_links)
+            print(song_list)
+            print()
+            print()
+            return jsonify({"error": f"No YouTube links found for songs at {url}"}), 404
+        
+        print()
+        print()
+        print(min_length)
+        print()
+        print()
         song_list = song_list[:min_length]
         movie_list = movie_list[:min_length]
         youtube_links = youtube_links[:min_length]
@@ -132,9 +171,11 @@ def get_random_song():
         Songs_list = list(zip(song_list, movie_list, youtube_links))
         
         if not Songs_list:
-            return jsonify({"error": "No valid songs found"}), 404
+            print(Songs_list)
+            return jsonify({"error": f"No valid songs found at {url}"}), 404
             
         rsong = random.choice(Songs_list)
+        print(rsong)
         random_song = {
             'title': rsong[0],
             'movie': rsong[1],
@@ -143,6 +184,8 @@ def get_random_song():
             'youtubeId': rsong[2]
         }
         
+        print(random_song)
+
         return jsonify(random_song)
     
     except KeyError as e:
@@ -159,7 +202,8 @@ def get_song_list():
         param = request.get_json()
         year = int(param['year'])
         difficulty = param['difficulty'].lower()
-        
+        genre = param['genre'].lower()
+
         year_max = year
         # Remove strict assertion - handle all valid years
         if year_max <= 1980:
@@ -169,9 +213,9 @@ def get_song_list():
 
         level_map = {
             'easy' : ['rating_type_up', [1,2,3,4]],
-            'medium': ['rating_type_up', [5,6,7,8]],
-            'hard': ['rating_type_down', [5,6,7,8]],
-            'extreme': ['rating_type_down', [1,2,3,4]]
+            'medium': ['rating_type_up', [3,4,5,6]],
+            'hard': ['rating_type_down', [7,8,9,10]],
+            'extreme': ['rating_type_down', [3,4,5,6]]
         }
         
         if difficulty not in level_map:
@@ -190,7 +234,14 @@ def get_song_list():
         
         all_titles = []
         for page_id in level_map[difficulty][1]:
-            url = f"https://myswar.co/advanced-search?pagid={page_id}&playlist=0&album_type=Film&from_year={year_min}&to_year={year_max}&album_language=Hindi&sort={level_map[difficulty][0]}&ut=3&result_type=songs"
+            url = ""
+            if param['genre'].lower() == 'all':
+                genre = random.choice(['bollywood','hiphop'])
+            if genre == 'bollywood':
+                url = f"https://myswar.co/popular_song/decade/{year-year%10+1}/{page_id}?sort={level_map[difficulty][0]}"
+            else:
+                url = f"https://myswar.co/popular_song/genre/Hip-hop/{page_id}?sort={level_map[difficulty][0]}"
+            # url = f"https://myswar.co/advanced-search?pagid={page_id}&playlist=0&album_type=Film&from_year={year_min}&to_year={year_max}&album_language=Hindi&sort={level_map[difficulty][0]}&ut=3&result_type=songs"
 
             # Add retry mechanism
             max_retries = 3
