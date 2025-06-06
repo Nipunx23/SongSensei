@@ -421,7 +421,7 @@ function UnlimitedMode() {
 
         if (
           correctTitle.toLowerCase().includes(inputLower) &&
-          input.length >= correctTitle.length/2 &&
+          input.length >= correctTitle.length/5 &&
           !filtered.includes(correctTitle)
         ) {
           filtered[Math.floor(Math.random() * filtered.length)] = songData.title;
