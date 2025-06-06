@@ -417,7 +417,7 @@ function UnlimitedMode() {
 
         const filtered = all_songs
           .filter(title => title.toLowerCase().includes(inputLower))
-          .slice(0, 5);
+          .slice(0, 10);
 
         if (
           correctTitle.toLowerCase().includes(inputLower) &&
