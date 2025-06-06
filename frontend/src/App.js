@@ -466,7 +466,7 @@ function UnlimitedMode() {
       setSongData(data);
       setGuesses([]);
       setGameStatus('playing');
-      setPlayTime(100);
+      setPlayTime(500);
       setRandStart(Math.floor(Math.random() * 31) + 10);
 
       try {
@@ -498,7 +498,7 @@ function UnlimitedMode() {
       setSongData(fallbackSong);
       setGuesses([]);
       setGameStatus('playing');
-      setPlayTime(100);
+      setPlayTime(500);
       setRandStart(Math.floor(Math.random() * 31) + 10);
       
       // Use fallback song titles for suggestions
@@ -696,7 +696,7 @@ function UnlimitedMode() {
       setGuesses([]);
       setGameStatus('playing');
       setSlideDirection('');
-      setPlayTime(100); // Reset play time for new song
+      setPlayTime(500); // Reset play time for new song
       
       // Fetch a new song with random year
       handleFetchNewSong();
@@ -764,7 +764,7 @@ function UnlimitedMode() {
     setGuesses([]);
     setGameStatus('playing');
     setSlideDirection('');
-    setPlayTime(100);
+    setPlayTime(500);
     setIsPlaying(false);
     setPlayerReady(false);
     setError(null);
