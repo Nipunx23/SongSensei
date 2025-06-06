@@ -242,7 +242,7 @@ function UnlimitedMode() {
   const [playerReady, setPlayerReady] = useState(false);
   const [genre, setGenre] = useState('all'); // 'all', 'bollywood', 'hiphop'
   // Add state for progressive timer
-  const [playTime, setPlayTime] = useState(100); // Start with 0.1 seconds (in milliseconds)
+  const [playTime, setPlayTime] = useState(500); // Start with 0.5 seconds (in milliseconds)
   
   const MAX_GUESSES = 5;
   // Remove fixed PLAY_TIME constant and use state instead
@@ -613,14 +613,14 @@ function UnlimitedMode() {
   const increasePlayTime = () => {
     // The sequence is 0.1 -> 0.5 -> 1 -> 5 -> 10 seconds
     switch (playTime) {
-      case 100: // 0.1 seconds
-        setPlayTime(500); // 0.5 seconds
+      case 2000: // 0.1 seconds
+        setPlayTime(5000); // 0.5 seconds
         break;
       case 500: // 0.5 seconds
         setPlayTime(1000); // 1 second
         break;
       case 1000: // 1 second
-        setPlayTime(5000); // 5 seconds
+        setPlayTime(2000); // 5 seconds
         break;
       case 5000: // 5 seconds
         setPlayTime(10000); // 10 seconds
