@@ -613,14 +613,14 @@ function UnlimitedMode() {
   const increasePlayTime = () => {
     // The sequence is 0.1 -> 0.5 -> 1 -> 5 -> 10 seconds
     switch (playTime) {
-      case 2000: // 0.1 seconds
-        setPlayTime(5000); // 0.5 seconds
-        break;
       case 500: // 0.5 seconds
         setPlayTime(1000); // 1 second
         break;
       case 1000: // 1 second
         setPlayTime(2000); // 5 seconds
+        break;
+      case 2000: // 0.1 seconds
+        setPlayTime(5000); // 0.5 seconds
         break;
       case 5000: // 5 seconds
         setPlayTime(10000); // 10 seconds
